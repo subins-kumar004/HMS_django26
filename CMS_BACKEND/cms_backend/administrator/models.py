@@ -1,10 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-
 # =========================
 # ROLE MODEL
 # =========================
+
 
 class Role(models.Model):
     role_name = models.CharField(max_length=50, unique=True)
@@ -17,6 +17,7 @@ class Role(models.Model):
 # STAFF / USER MODEL
 # =========================
 
+
 class Staff(AbstractUser):
     contact = models.CharField(max_length=15)
     gender = models.CharField(max_length=10)
@@ -24,12 +25,7 @@ class Staff(AbstractUser):
     salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     emp_id = models.CharField(max_length=20, unique=True)
 
-    role = models.ForeignKey(
-        Role,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
 
@@ -40,6 +36,7 @@ class Staff(AbstractUser):
 # =========================
 # SPECIALIZATION
 # =========================
+
 
 class Specialization(models.Model):
     specialization_name = models.CharField(max_length=100, unique=True)
@@ -52,22 +49,15 @@ class Specialization(models.Model):
 # DOCTOR
 # =========================
 
+
 class Doctor(models.Model):
-    staff = models.OneToOneField(
-        Staff,
-        on_delete=models.CASCADE
-    )
+    staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
 
     specialization = models.ForeignKey(
-        Specialization,
-        on_delete=models.SET_NULL,
-        null=True
+        Specialization, on_delete=models.SET_NULL, null=True
     )
 
-    consultation_fee = models.DecimalField(
-        max_digits=10,
-        decimal_places=2
-    )
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
 
     is_active = models.BooleanField(default=True)
 
@@ -78,6 +68,7 @@ class Doctor(models.Model):
 # =========================
 # PATIENT
 # =========================
+
 
 class Patient(models.Model):
     patient_name = models.CharField(max_length=100)
@@ -102,23 +93,18 @@ class Patient(models.Model):
 # APPOINTMENT
 # =========================
 
+
 class Appointment(models.Model):
 
     STATUS_CHOICES = (
-        ('Scheduled', 'Scheduled'),
-        ('Completed', 'Completed'),
-        ('Cancelled', 'Cancelled'),
+        ("Scheduled", "Scheduled"),
+        ("Completed", "Completed"),
+        ("Cancelled", "Cancelled"),
     )
 
-    patient = models.ForeignKey(
-        Patient,
-        on_delete=models.CASCADE
-    )
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
 
-    doctor = models.ForeignKey(
-        Doctor,
-        on_delete=models.CASCADE
-    )
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
 
     appointment_date = models.DateField()
 
@@ -127,9 +113,7 @@ class Appointment(models.Model):
     token_number = models.IntegerField()
 
     status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='Scheduled'
+        max_length=20, choices=STATUS_CHOICES, default="Scheduled"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -142,12 +126,10 @@ class Appointment(models.Model):
 # CONSULTATION
 # =========================
 
+
 class Consultation(models.Model):
 
-    appointment = models.OneToOneField(
-        Appointment,
-        on_delete=models.CASCADE
-    )
+    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE)
 
     symptoms = models.TextField()
 
@@ -164,6 +146,7 @@ class Consultation(models.Model):
 # =========================
 # MEDICINE
 # =========================
+
 
 class Medicine(models.Model):
 
@@ -187,12 +170,10 @@ class Medicine(models.Model):
 # MEDICINE STOCK
 # =========================
 
+
 class MedicineStock(models.Model):
 
-    medicine = models.ForeignKey(
-        Medicine,
-        on_delete=models.CASCADE
-    )
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
 
     quantity = models.IntegerField()
 
@@ -208,17 +189,12 @@ class MedicineStock(models.Model):
 # MEDICINE PRESCRIPTION
 # =========================
 
+
 class MedicinePrescription(models.Model):
 
-    appointment = models.ForeignKey(
-        Appointment,
-        on_delete=models.CASCADE
-    )
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
 
-    medicine = models.ForeignKey(
-        Medicine,
-        on_delete=models.CASCADE
-    )
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
 
     dosage = models.CharField(max_length=100)
 
@@ -236,16 +212,14 @@ class MedicinePrescription(models.Model):
 # LAB TEST
 # =========================
 
+
 class LabTest(models.Model):
 
     test_name = models.CharField(max_length=100)
 
     category = models.CharField(max_length=100)
 
-    amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2
-    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     reference_range = models.CharField(max_length=100)
 
@@ -261,30 +235,18 @@ class LabTest(models.Model):
 # LAB TEST PRESCRIPTION
 # =========================
 
+
 class LabTestPrescription(models.Model):
 
-    appointment = models.ForeignKey(
-        Appointment,
-        on_delete=models.CASCADE
-    )
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
 
-    lab_test = models.ForeignKey(
-        LabTest,
-        on_delete=models.CASCADE
-    )
+    lab_test = models.ForeignKey(LabTest, on_delete=models.CASCADE)
 
     instructions = models.TextField(blank=True, null=True)
 
-    test_value = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True
-    )
+    test_value = models.CharField(max_length=100, blank=True, null=True)
 
-    remarks = models.TextField(
-        blank=True,
-        null=True
-    )
+    remarks = models.TextField(blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
 
@@ -298,28 +260,16 @@ class LabTestPrescription(models.Model):
 # BILL
 # =========================
 
+
 class Bill(models.Model):
 
-    appointment = models.OneToOneField(
-        Appointment,
-        on_delete=models.CASCADE
-    )
+    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE)
 
-    consultation_fee = models.DecimalField(
-        max_digits=10,
-        decimal_places=2
-    )
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
 
-    additional_charge = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
+    additional_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    total_amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2
-    )
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

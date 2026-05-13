@@ -2,6 +2,8 @@ from django.urls import path
 
 from .views import (
 
+    LoginView,
+
     RoleListView,
     RoleDetailView,
 
@@ -9,6 +11,7 @@ from .views import (
     StaffListView,
     StaffDetailView,
     StaffUpdateView,
+    StaffDeactivateView,
 
     SpecializationCreateView,
     SpecializationListView,
@@ -16,11 +19,18 @@ from .views import (
     DoctorCreateView,
     DoctorListView,
     DoctorDetailView,
-    DoctorUpdateView
+    DoctorUpdateView,
 )
 
 
 urlpatterns = [
+
+    # =========================
+    # AUTH APIs
+    # =========================
+
+    path('auth/login/', LoginView.as_view()),
+
 
     # =========================
     # ROLE APIs
@@ -38,6 +48,11 @@ urlpatterns = [
     path('staff/', StaffListView.as_view()),
     path('staff/<int:pk>/', StaffDetailView.as_view()),
     path('staff/update/<int:pk>/', StaffUpdateView.as_view()),
+
+    path(
+        'staff/deactivate/<int:pk>/',
+        StaffDeactivateView.as_view()
+    ),
 
 
     # =========================
