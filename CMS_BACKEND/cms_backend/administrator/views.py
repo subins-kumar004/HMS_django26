@@ -8,24 +8,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .auth_serializers import LoginSerializer
 
-from .models import (
-    Role,
-    Staff,
-    Specialization,
-    Doctor
-)
+from .models import Role, Staff, Specialization, Doctor
 
 from .serializers import (
     RoleSerializer,
     StaffSerializer,
     SpecializationSerializer,
-    DoctorSerializer
+    DoctorSerializer,
+    LoginSerializer,
+    LogoutSerializer,
 )
-
 
 # =========================
 # ROLE APIs
 # =========================
+
 
 class RoleListView(generics.ListAPIView):
     queryset = Role.objects.all()
@@ -43,6 +40,7 @@ class RoleDetailView(generics.RetrieveAPIView):
 # STAFF APIs
 # =========================
 
+
 class StaffCreateView(generics.CreateAPIView):
     queryset = Staff.objects.all()
     serializer_class = StaffSerializer
@@ -58,9 +56,9 @@ class StaffListView(generics.ListAPIView):
 
         queryset = Staff.objects.all()
 
-        search = self.request.query_params.get('search')
+        search = self.request.query_params.get("search")
 
-        role = self.request.query_params.get('role')
+        role = self.request.query_params.get("role")
 
         if search:
             queryset = queryset.filter(username__icontains=search)
@@ -95,22 +93,21 @@ class StaffDeactivateView(APIView):
         except Staff.DoesNotExist:
 
             return Response(
-                {"error": "Staff not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Staff not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         staff.is_active = False
         staff.save()
 
         return Response(
-            {"message": "Staff deactivated successfully"},
-            status=status.HTTP_200_OK
+            {"message": "Staff deactivated successfully"}, status=status.HTTP_200_OK
         )
 
 
 # =========================
 # SPECIALIZATION APIs
 # =========================
+
 
 class SpecializationCreateView(generics.CreateAPIView):
     queryset = Specialization.objects.all()
@@ -133,6 +130,7 @@ class SpecializationUpdateView(generics.UpdateAPIView):
 # =========================
 # DOCTOR APIs
 # =========================
+
 
 class DoctorCreateView(generics.CreateAPIView):
     queryset = Doctor.objects.all()
@@ -170,22 +168,21 @@ class DoctorDeactivateView(APIView):
         except Doctor.DoesNotExist:
 
             return Response(
-                {"error": "Doctor not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Doctor not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         doctor.is_active = False
         doctor.save()
 
         return Response(
-            {"message": "Doctor deactivated successfully"},
-            status=status.HTTP_200_OK
+            {"message": "Doctor deactivated successfully"}, status=status.HTTP_200_OK
         )
 
 
 # =========================
 # AUTH APIs
 # =========================
+
 
 class LoginView(APIView):
 
@@ -199,46 +196,45 @@ class LoginView(APIView):
 
             refresh = RefreshToken.for_user(user)
 
-            return Response({
+            return Response(
+                {
+                    "message": "Login successful",
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "username": user.username,
+                },
+                status=status.HTTP_200_OK,
+            )
 
-                "message": "Login successful",
-
-                "refresh": str(refresh),
-
-                "access": str(refresh.access_token),
-
-                "username": user.username,
-
-            }, status=status.HTTP_200_OK)
-
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serializer = LogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {"message": "Logout successful"},
+            status=status.HTTP_200_OK
+        )
+
+
+# =========================
+# LOGOUT API
+# =========================
+
+
+class LogoutView(APIView):
 
     def post(self, request):
 
-        try:
+        serializer = LogoutSerializer(data=request.data)
 
-            refresh_token = request.data["refresh"]
+        serializer.is_valid(raise_exception=True)
 
-            token = RefreshToken(refresh_token)
+        serializer.save()
 
-            token.blacklist()
-
-            return Response(
-                {"message": "Logout successful"},
-                status=status.HTTP_205_RESET_CONTENT
-            )
-
-        except Exception:
-
-            return Response(
-                {"error": "Invalid token"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
