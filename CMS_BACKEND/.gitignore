@@ -21,6 +21,9 @@ staticfiles/
 myenv/
 venv/
 env/
+myenvv/
+
+
 
 # VS Code
 .vscode/
