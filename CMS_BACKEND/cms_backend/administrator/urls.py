@@ -16,11 +16,13 @@ from .views import (
 
     SpecializationCreateView,
     SpecializationListView,
+    SpecializationUpdateView,
 
     DoctorCreateView,
     DoctorListView,
     DoctorDetailView,
     DoctorUpdateView,
+    DoctorDeactivateView,
 )
 
 
@@ -63,6 +65,7 @@ urlpatterns = [
 
     path('specializations/create/', SpecializationCreateView.as_view()),
     path('specializations/', SpecializationListView.as_view()),
+    path('specializations/<int:pk>/', SpecializationUpdateView.as_view()),
 
 
     # =========================
@@ -73,4 +76,5 @@ urlpatterns = [
     path('doctors/', DoctorListView.as_view()),
     path('doctors/<int:pk>/', DoctorDetailView.as_view()),
     path('doctors/update/<int:pk>/', DoctorUpdateView.as_view()),
+    path('doctors/deactivate/<int:pk>/', DoctorDeactivateView.as_view()),
 ]

@@ -3,12 +3,15 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from .models import Role, Staff, Specialization, Doctor
+from .models import (
+    Role, Staff, Specialization, Doctor, Patient,
+    Appointment, Consultation, Medicine, MedicineStock,
+    MedicinePrescription, LabTest, LabTestPrescription, Bill
+)
 
 # =========================
-# ROLE SERIALIZER
+# ROLE
 # =========================
-
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,45 +20,30 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 # =========================
-# STAFF SERIALIZER
+# STAFF
 # =========================
 
-
 class StaffSerializer(serializers.ModelSerializer):
+    role_name = serializers.CharField(source='role.role_name', read_only=True)
 
     class Meta:
         model = Staff
         fields = [
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "email",
-            "contact",
-            "gender",
-            "address",
-            "salary",
-            "emp_id",
-            "role",
-            "is_active",
-            "password",
+            "id", "username", "first_name", "last_name", "email",
+            "contact", "gender", "address", "salary", "emp_id",
+            "role", "role_name", "is_active", "password",
         ]
+        extra_kwargs = {
+            "password": {"write_only": True, "required": False}
+        }
 
-        extra_kwargs = {"password": {"write_only": True}} 
-
-        
-
-    # CREATE STAFF
     def create(self, validated_data):
         password = validated_data.pop("password")
-
         user = Staff(**validated_data)
         user.set_password(password)
         user.save()
-
         return user
 
-    # UPDATE STAFF
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
 
@@ -70,29 +58,7 @@ class StaffSerializer(serializers.ModelSerializer):
 
 
 # =========================
-# SPECIALIZATION SERIALIZER
-# =========================
-
-
-class SpecializationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Specialization
-        fields = "__all__"
-
-
-# =========================
-# DOCTOR SERIALIZER
-# =========================
-
-
-class DoctorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Doctor
-        fields = "__all__"
-
-
-# =========================
-# LOGIN SERIALIZER
+# LOGIN (IMPORTANT FIXED PART)
 # =========================
 
 class LoginSerializer(serializers.Serializer):
@@ -113,11 +79,11 @@ class LoginSerializer(serializers.Serializer):
 
         refresh = RefreshToken.for_user(user)
 
+        # FIX: We return only primitive types (strings, ints) that JSON can handle
         return {
             "message": "Login successful",
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "username": user.username,
             "user": {
                 "id": user.id,
                 "username": user.username,
@@ -131,17 +97,73 @@ class LoginSerializer(serializers.Serializer):
 
 
 # =========================
-# LOGOUT SERIALIZER
+# LOGOUT
 # =========================
-
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
     def save(self):
         try:
-            refresh_token = self.validated_data["refresh"]
-            token = RefreshToken(refresh_token)
+            token = RefreshToken(self.validated_data["refresh"])
             token.blacklist()
         except TokenError:
-             raise serializers.ValidationError("Token is invalid or already blacklisted")
+            raise serializers.ValidationError("Token is invalid or already blacklisted")
+
+
+# =========================
+# MEDICAL CORE
+# =========================
+
+class SpecializationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Specialization
+        fields = "__all__"
+
+
+class DoctorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Doctor
+        fields = "__all__"
+
+
+class PatientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patient
+        fields = "__all__"
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = "__all__"
+
+
+class ConsultationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Consultation
+        fields = "__all__"
+
+
+class MedicineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Medicine
+        fields = "__all__"
+
+
+class MedicineStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineStock
+        fields = "__all__"
+
+
+class LabTestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LabTest
+        fields = "__all__"
+
+
+class BillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bill
+        fields = "__all__"
