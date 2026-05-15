@@ -2,26 +2,18 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-
     # Medicine Management
-
-    path('medicines/add', add_medicine),  # POST: Add new medicine
-    path('medicines', list_medicines),  # GET: Get all medicines
-    path('medicines/<int:id>', get_medicine),  # GET: Get medicine by ID
-    path('medicines/update/<int:id>', update_medicine),  # PUT: Update medicine
-    path('medicines/<int:id>/deactivate', deactivate_medicine),  # PATCH: Deactivate medicine
-
+    path('medicines', manage_medicines),  # GET, POST
+    path('medicines/<int:id>', medicine_detail),  # GET, PUT
+    path('medicines/<int:id>/deactivate', deactivate_medicine),  # PATCH
 
     # Inventory Management
-
-    path('inventory/medicine/add', add_inventory),  # POST: Add stock
-    path('inventory/medicine/update/<int:id>', update_inventory),  # PUT: Update stock
-    path('inventory/medicine', list_inventory),  # GET: Get all inventory
-    path('inventory/medicine/<int:medicine_id>', get_inventory_by_medicine),  # GET: Get stock by medicine
-    path('inventory/medicine/<int:id>/flag-low', flag_low_stock),  # PATCH: Check low stock
-
+    path('inventory/medicine', manage_inventory),  # GET all, POST
+    path('inventory/medicine/<int:medicine_id>', get_inventory_by_medicine),  # GET
+    path('inventory/medicine/stock/<int:id>', update_inventory_stock),  # PUT
+    path('inventory/medicine/stock/<int:id>/flag-low', flag_low_stock),  # PATCH
 
     # Dispense Medicine
-
-    path('dispense', dispense_medicine),  # POST: Dispense medicine and reduce stock
+    path('prescriptions/patient/<int:patient_id>', get_patient_prescriptions),
+    path('dispense', dispense_medicine),
 ]
