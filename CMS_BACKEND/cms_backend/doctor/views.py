@@ -111,6 +111,29 @@ class MedicineByAppointmentView(generics.ListAPIView):
         )
 
 
+# Medicine history by patient
+class MedicineHistoryByPatientView(generics.ListAPIView):
+    serializer_class = MedicinePrescriptionSerializer
+
+    def get_queryset(self):
+        patient_id = self.kwargs['patient_id']
+
+        return MedicinePrescription.objects.filter(
+            appointment__patient_id=patient_id
+        ).order_by('-created_at')
+
+
+# Medicine history by doctor
+class MedicineHistoryByDoctorView(generics.ListAPIView):
+    serializer_class = MedicinePrescriptionSerializer
+
+    def get_queryset(self):
+        doctor_id = self.kwargs['doctor_id']
+
+        return MedicinePrescription.objects.filter(
+            appointment__doctor_id=doctor_id
+        ).order_by('-created_at')
+
 # ==========================================
 # LAB TEST PRESCRIPTION
 # ==========================================

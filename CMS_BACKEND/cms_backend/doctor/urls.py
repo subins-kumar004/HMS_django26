@@ -62,6 +62,15 @@ urlpatterns = [
     ),
 
 
+path(
+    'medicine/history/patient/<int:patient_id>/',
+    MedicineHistoryByPatientView.as_view()
+),
+
+path(
+    'medicine/history/doctor/<int:doctor_id>/',
+    MedicineHistoryByDoctorView.as_view()
+),
     # ==========================================
     # LAB TEST
     # ==========================================
