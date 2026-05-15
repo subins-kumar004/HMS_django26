@@ -42,9 +42,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
 
     'administrator',
-
+    'pharmacist',
     'labtech',
     'doctor',
+    'receptionist',
 ]
 
 MIDDLEWARE = [

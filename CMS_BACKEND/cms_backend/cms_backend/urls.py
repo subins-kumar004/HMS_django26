@@ -27,4 +27,5 @@ urlpatterns = [
 
     # Doctor module
     path('api/', include('doctor.urls')),
+    path('api/', include('pharmacist.urls')),
 ]
