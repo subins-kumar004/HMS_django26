@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from rest_framework import generics
 
 from administrator.models import (
@@ -38,7 +39,7 @@ class ConsultationByPatientView(generics.ListAPIView):
 
         return Consultation.objects.filter(
             appointment__patient_id=patient_id
-        )
+        ).order_by('-created_at')
 
 
 # View consultation by doctor
@@ -50,7 +51,7 @@ class ConsultationByDoctorView(generics.ListAPIView):
 
         return Consultation.objects.filter(
             appointment__doctor_id=doctor_id
-        )
+        ).order_by('-created_at')
 
 
 # View consultation by appointment
@@ -62,7 +63,7 @@ class ConsultationByAppointmentView(generics.ListAPIView):
 
         return Consultation.objects.filter(
             appointment_id=appointment_id
-        )
+        ).order_by('-created_at')
 
 
 # ==========================================
@@ -73,6 +74,11 @@ class ConsultationByAppointmentView(generics.ListAPIView):
 class MedicinePrescriptionCreateView(generics.CreateAPIView):
     queryset = MedicinePrescription.objects.all()
     serializer_class = MedicinePrescriptionSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if isinstance(kwargs.get('data', {}), list):
+            kwargs['many'] = True
+        return super().get_serializer(*args, **kwargs)
 
 
 # Update prescription
@@ -96,7 +102,7 @@ class MedicineByPatientView(generics.ListAPIView):
 
         return MedicinePrescription.objects.filter(
             appointment__patient_id=patient_id
-        )
+        ).order_by('-created_at')
 
 
 # View by appointment
@@ -108,7 +114,7 @@ class MedicineByAppointmentView(generics.ListAPIView):
 
         return MedicinePrescription.objects.filter(
             appointment_id=appointment_id
-        )
+        ).order_by('-created_at')
 
 
 # Medicine history by patient
@@ -143,6 +149,11 @@ class LabTestPrescriptionCreateView(generics.CreateAPIView):
     queryset = LabTestPrescription.objects.all()
     serializer_class = LabTestPrescriptionSerializer
 
+    def get_serializer(self, *args, **kwargs):
+        if isinstance(kwargs.get('data', {}), list):
+            kwargs['many'] = True
+        return super().get_serializer(*args, **kwargs)
+
 
 # Update lab result
 class LabTestPrescriptionUpdateView(generics.UpdateAPIView):
@@ -165,7 +176,7 @@ class LabTestByPatientView(generics.ListAPIView):
 
         return LabTestPrescription.objects.filter(
             appointment__patient_id=patient_id
-        )
+        ).order_by('-created_at')
 
 
 # View by appointment
@@ -177,4 +188,4 @@ class LabTestByAppointmentView(generics.ListAPIView):
 
         return LabTestPrescription.objects.filter(
             appointment_id=appointment_id
-        )
+        ).order_by('-created_at')
