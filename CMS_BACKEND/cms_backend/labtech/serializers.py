@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from administrator.models import (
+from .models import (
     LabTest,
     LabTestPrescription
 )

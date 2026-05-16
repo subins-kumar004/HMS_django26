@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from administrator.models import (
+from .models import (
     LabTest,
     LabTestPrescription
 )
@@ -26,7 +26,7 @@ def lab_tests(request):
 
     if request.method == 'GET':
 
-        tests = LabTest.objects.filter(status=True)
+        tests = LabTest.objects.filter(is_active=True)
 
         serializer = LabTestSerializer(
             tests,
@@ -129,7 +129,7 @@ def deactivate_lab_test(request, labTestId):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    test.status = False
+    test.is_active = False
 
     test.save()
 
@@ -184,8 +184,8 @@ def record_lab_result(request, labTestPrescriptionId):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    prescription.test_value = request.data.get(
-        'test_value'
+    prescription.lab_test_value = request.data.get(
+        'lab_test_value'
     )
 
     prescription.remarks = request.data.get(
@@ -233,7 +233,7 @@ def get_results_by_date_range(request):
     end_date = request.GET.get('endDate')
 
     results = LabTestPrescription.objects.filter(
-        created_at__date__range=[
+        prescribed_date__range=[
             start_date,
             end_date
         ],
