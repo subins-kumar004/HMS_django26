@@ -21,6 +21,13 @@ staticfiles/
 myenv/
 venv/
 env/
+<<<<<<< HEAD
+myenvv/
+
+
+=======
+shenv/
+>>>>>>> origin/shefna
 
 # VS Code
 .vscode/

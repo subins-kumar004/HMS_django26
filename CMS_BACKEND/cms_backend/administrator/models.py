@@ -19,13 +19,30 @@ class Role(models.Model):
 
 
 class Staff(AbstractUser):
-    contact = models.CharField(max_length=15)
-    gender = models.CharField(max_length=10)
-    address = models.TextField()
-    salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    emp_id = models.CharField(max_length=20, unique=True)
+    contact = models.CharField(max_length=15, null=True, blank=True)
+    gender = models.CharField(max_length=10, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
 
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
+    salary = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    emp_id = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True
+    )
+
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     is_active = models.BooleanField(default=True)
 
@@ -39,7 +56,10 @@ class Staff(AbstractUser):
 
 
 class Specialization(models.Model):
-    specialization_name = models.CharField(max_length=100, unique=True)
+    specialization_name = models.CharField(
+        max_length=100,
+        unique=True
+    )
 
     def __str__(self):
         return self.specialization_name
@@ -51,13 +71,22 @@ class Specialization(models.Model):
 
 
 class Doctor(models.Model):
-    staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
 
-    specialization = models.ForeignKey(
-        Specialization, on_delete=models.SET_NULL, null=True
+    staff = models.OneToOneField(
+        Staff,
+        on_delete=models.CASCADE
     )
 
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    specialization = models.ForeignKey(
+        Specialization,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    consultation_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
 
     is_active = models.BooleanField(default=True)
 
@@ -71,6 +100,14 @@ class Doctor(models.Model):
 
 
 class Patient(models.Model):
+
+    patient_id = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True
+    )
+
     patient_name = models.CharField(max_length=100)
 
     contact = models.CharField(max_length=15)
@@ -83,10 +120,55 @@ class Patient(models.Model):
 
     membership = models.BooleanField(default=False)
 
+    membership_id = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+
+        is_new = self.pk is None
+
+        super().save(*args, **kwargs)
+
+        update_fields = []
+
+        if is_new and not self.patient_id:
+
+            self.patient_id = f"PAT-{self.pk:04d}"
+
+            update_fields.append('patient_id')
+
+        if self.membership and not self.membership_id:
+
+            self.membership_id = f"MEM-{self.pk:04d}"
+
+            update_fields.append('membership_id')
+
+        elif not self.membership and self.membership_id:
+
+            self.membership_id = None
+
+            update_fields.append('membership_id')
+
+        if update_fields:
+
+            kwargs.pop('force_insert', None)
+
+            kwargs.pop('force_update', None)
+
+            super().save(
+                update_fields=update_fields,
+                *args,
+                **kwargs
+            )
+
     def __str__(self):
-        return self.patient_name
+        return f"{self.patient_id} - {self.patient_name}"
 
 
 # =========================
@@ -102,21 +184,53 @@ class Appointment(models.Model):
         ("Cancelled", "Cancelled"),
     )
 
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE
+    )
 
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(
+        Doctor,
+        on_delete=models.CASCADE
+    )
 
     appointment_date = models.DateField()
 
     appointment_time = models.TimeField()
 
-    token_number = models.IntegerField()
+    token_number = models.IntegerField(
+        blank=True,
+        null=True
+    )
 
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="Scheduled"
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Scheduled"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+
+        if not self.token_number:
+
+            last_appointment = Appointment.objects.filter(
+                doctor=self.doctor,
+                appointment_date=self.appointment_date
+            ).order_by('token_number').last()
+
+            if last_appointment and last_appointment.token_number:
+
+                self.token_number = (
+                    last_appointment.token_number + 1
+                )
+
+            else:
+
+                self.token_number = 1
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.patient.patient_name} - {self.doctor}"
@@ -129,13 +243,19 @@ class Appointment(models.Model):
 
 class Consultation(models.Model):
 
-    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE)
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE
+    )
 
     symptoms = models.TextField()
 
     diagnosis = models.TextField()
 
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(
+        blank=True,
+        null=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -173,7 +293,10 @@ class Medicine(models.Model):
 
 class MedicineStock(models.Model):
 
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE
+    )
 
     quantity = models.IntegerField()
 
@@ -182,7 +305,10 @@ class MedicineStock(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.medicine.medicine_name} - {self.quantity}"
+        return (
+            f"{self.medicine.medicine_name} - "
+            f"{self.quantity}"
+        )
 
 
 # =========================
@@ -192,9 +318,15 @@ class MedicineStock(models.Model):
 
 class MedicinePrescription(models.Model):
 
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.CASCADE
+    )
 
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE
+    )
 
     dosage = models.CharField(max_length=100)
 
@@ -205,7 +337,10 @@ class MedicinePrescription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.appointment.id} - {self.medicine.medicine_name}"
+        return (
+            f"{self.appointment.id} - "
+            f"{self.medicine.medicine_name}"
+        )
 
 
 # =========================
@@ -219,7 +354,10 @@ class LabTest(models.Model):
 
     category = models.CharField(max_length=100)
 
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
 
     reference_range = models.CharField(max_length=100)
 
@@ -238,22 +376,41 @@ class LabTest(models.Model):
 
 class LabTestPrescription(models.Model):
 
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.CASCADE
+    )
 
-    lab_test = models.ForeignKey(LabTest, on_delete=models.CASCADE)
+    lab_test = models.ForeignKey(
+        LabTest,
+        on_delete=models.CASCADE
+    )
 
-    instructions = models.TextField(blank=True, null=True)
+    instructions = models.TextField(
+        blank=True,
+        null=True
+    )
 
-    test_value = models.CharField(max_length=100, blank=True, null=True)
+    test_value = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
 
-    remarks = models.TextField(blank=True, null=True)
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
 
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.appointment.id} - {self.lab_test.test_name}"
+        return (
+            f"{self.appointment.id} - "
+            f"{self.lab_test.test_name}"
+        )
 
 
 # =========================
@@ -263,13 +420,26 @@ class LabTestPrescription(models.Model):
 
 class Bill(models.Model):
 
-    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE)
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE
+    )
 
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    consultation_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
 
-    additional_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    additional_charge = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
 
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

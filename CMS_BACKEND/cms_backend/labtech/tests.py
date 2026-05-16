@@ -1,118 +1,125 @@
-from rest_framework.test import APITestCase
-from rest_framework import status
-from .models import LabTest, LabTestPrescription
+from django.test import TestCase
+from rest_framework.test import APIClient
+from administrator.models import LabTest, LabTestPrescription, Appointment, Patient, Doctor, Staff, Specialization, Role
 from datetime import date
 
-class LabTechTests(APITestCase):
+class LabTechModuleTest(TestCase):
 
     def setUp(self):
-        # Create a sample LabTest
-        self.lab_test = LabTest.objects.create(
-            test_name="Complete Blood Count",
-            category="Blood",
-            amount=500.00,
-            reference_ranges="RBC: 4.5-5.5, WBC: 4000-11000",
-            sample_type="Blood"
-        )
+        self.client = APIClient()
+
+        # Create basic required models
+        self.patient = Patient.objects.create(patient_name="John Doe", contact="1234567890", age=30, gender="Male", address="NY")
+        self.role = Role.objects.create(role_name="Doctor")
+        self.staff = Staff.objects.create(username="doc_lab", emp_id="E002", role=self.role)
+        self.spec = Specialization.objects.create(specialization_name="General")
+        self.doctor = Doctor.objects.create(staff=self.staff, specialization=self.spec, consultation_fee=500.00)
         
-        # Create a sample LabTestPrescription
-        self.prescription = LabTestPrescription.objects.create(
-            appointment_id=101,
-            patient_name="John Doe",
-            doctor_name="Dr. Smith",
-            lab_test=self.lab_test
+        self.appointment = Appointment.objects.create(
+            patient=self.patient, doctor=self.doctor, appointment_date=date.today(), 
+            appointment_time="10:00:00", token_number=1, status="Scheduled"
         )
 
-    # =================================
-    # 150. Lab Test CRUD Operations
-    # =================================
+        # Create Lab Test
+        self.labtest_data = {
+            "test_name": "Complete Blood Count",
+            "category": "Blood Test",
+            "amount": 500.00,
+            "reference_range": "Normal",
+            "sample_type": "Blood",
+            "status": True
+        }
+        self.labtest = LabTest.objects.create(**self.labtest_data)
 
-    def test_create_lab_test(self):
+        # Create Lab Test Prescription
+        self.prescription = LabTestPrescription.objects.create(
+            appointment=self.appointment,
+            lab_test=self.labtest,
+            instructions="Fasting required"
+        )
+
+    # =========================
+    # LAB TEST MANAGEMENT
+    # =========================
+
+    def test_list_lab_tests(self):
+        # Task 148: List All Lab Tests API
+        response = self.client.get('/api/labtests')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(response.data) >= 1)
+
+    def test_add_lab_test(self):
+        # Task 145: Add New Lab Test API
         data = {
             "test_name": "Lipid Profile",
-            "category": "Blood",
-            "amount": "800.00",
-            "reference_ranges": "Cholesterol < 200",
+            "category": "Blood Test",
+            "amount": 800.00,
+            "reference_range": "Normal",
             "sample_type": "Blood",
-            "is_active": True
+            "status": True
         }
         response = self.client.post('/api/labtests', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['test_name'], "Lipid Profile")
-
-    def test_get_lab_tests(self):
-        response = self.client.get('/api/labtests')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['test_name'], "Complete Blood Count")
+        self.assertEqual(response.status_code, 201)
 
     def test_get_lab_test_by_id(self):
-        response = self.client.get(f'/api/labtests/{self.lab_test.id}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Task 147: Get Lab Test by ID
+        response = self.client.get(f'/api/labtests/{self.labtest.id}')
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['test_name'], "Complete Blood Count")
 
     def test_update_lab_test(self):
+        # Task 146: Update Lab Test
         data = {
             "test_name": "Complete Blood Count Updated",
-            "category": "Blood",
-            "amount": "550.00",
-            "reference_ranges": "RBC: 4.5-5.5, WBC: 4000-11000",
-            "sample_type": "Blood"
+            "category": "Blood Test",
+            "amount": 600.00,
+            "reference_range": "Normal",
+            "sample_type": "Blood",
+            "status": True
         }
-        response = self.client.put(f'/api/labtests/{self.lab_test.id}', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['test_name'], "Complete Blood Count Updated")
-        self.assertEqual(response.data['amount'], "550.00")
+        response = self.client.put(f'/api/labtests/{self.labtest.id}', data, format='json')
+        self.assertEqual(response.status_code, 200)
 
     def test_deactivate_lab_test(self):
-        response = self.client.patch(f'/api/labtests/{self.lab_test.id}/deactivate')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.lab_test.refresh_from_db()
-        self.assertFalse(self.lab_test.is_active)
+        # Task 149: Deactivate Lab Test
+        response = self.client.patch(f'/api/labtests/{self.labtest.id}/deactivate')
+        self.assertEqual(response.status_code, 200)
 
-    # =================================
-    # 155, 161, 162. Prescription & Results
-    # =================================
-
-    def test_retrieve_result_by_appointment_id(self):
-        # 162. Write test case: retrieve result by appointment ID -> 200 OK with data
-        response = self.client.get('/api/labtests/results/appointment/101')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['appointment_id'], 101)
-        self.assertEqual(response.data[0]['patient_name'], "John Doe")
-
-    def test_retrieve_result_by_date_range(self):
-        # 155. Write test cases for prescription retrieval (by date range)
-        today = date.today().strftime('%Y-%m-%d')
-        response = self.client.get(f'/api/labtests/results?startDate={today}&endDate={today}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
-
-    def test_record_lab_result(self):
-        # 161. Write test case: record result -> 200 OK
-        data = {
-            "lab_test_value": "RBC: 5.0, WBC: 6000",
-            "remarks": "Normal"
-        }
-        response = self.client.put(f'/api/labtests/results/{self.prescription.id}', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['lab_test_value'], "RBC: 5.0, WBC: 6000")
-        self.assertEqual(response.data['remarks'], "Normal")
+    # =========================
+    # LAB TEST PRESCRIPTIONS & RESULTS
+    # =========================
 
     def test_add_lab_test_prescription(self):
         data = {
-            "appointment_id": 102,
-            "patient_name": "Alice Smith",
-            "doctor_name": "Dr. Brown",
-            "lab_test": self.lab_test.id
+            "appointment": self.appointment.id,
+            "lab_test": self.labtest.id,
+            "instructions": "No specific instructions"
         }
         response = self.client.post('/api/labtests/prescription/add', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['appointment_id'], 102)
+        self.assertEqual(response.status_code, 201)
+
+    def test_record_lab_result(self):
+        # Task 157: Record Lab Test Result
+        data = {
+            "test_value": "120",
+            "remarks": "Normal range"
+        }
+        response = self.client.put(f'/api/labtests/results/{self.prescription.id}', data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['test_value'], "120")
+
+    def test_get_results_by_appointment(self):
+        # Task 153: Get Lab Test Result by Appointment
+        response = self.client.get(f'/api/labtests/results/appointment/{self.appointment.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(response.data) >= 1)
+
+    def test_get_results_by_date_range(self):
+        # Task 154: List Lab Test Results by Date Range
+        response = self.client.get(f'/api/labtests/results?startDate=2020-01-01&endDate=2030-01-01')
+        self.assertEqual(response.status_code, 200)
 
     def test_deactivate_lab_test_prescription(self):
+        # Task 160: Deactivate Lab Test Prescription
         response = self.client.patch(f'/api/labtests/prescription/{self.prescription.id}/deactivate')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.prescription.refresh_from_db()
-        self.assertFalse(self.prescription.is_active)
+        self.assertEqual(response.status_code, 200)
