@@ -71,22 +71,39 @@ class Doctor(models.Model):
 
 
 class Patient(models.Model):
+    patient_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     patient_name = models.CharField(max_length=100)
-
     contact = models.CharField(max_length=15)
-
     age = models.IntegerField()
-
     gender = models.CharField(max_length=10)
-
     address = models.TextField()
-
     membership = models.BooleanField(default=False)
-
+    membership_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        update_fields = []
+        if is_new and not self.patient_id:
+            self.patient_id = f"PAT-{self.pk:04d}"
+            update_fields.append('patient_id')
+            
+        if self.membership and not self.membership_id:
+            self.membership_id = f"MEM-{self.pk:04d}"
+            update_fields.append('membership_id')
+        elif not self.membership and self.membership_id:
+            self.membership_id = None
+            update_fields.append('membership_id')
+            
+        if update_fields:
+            kwargs.pop('force_insert', None)
+            kwargs.pop('force_update', None)
+            super().save(update_fields=update_fields, *args, **kwargs)
+
     def __str__(self):
-        return self.patient_name
+        return f"{self.patient_id} - {self.patient_name}"
 
 
 # =========================
@@ -103,20 +120,27 @@ class Appointment(models.Model):
     )
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
-
     appointment_date = models.DateField()
-
     appointment_time = models.TimeField()
-
-    token_number = models.IntegerField()
-
+    token_number = models.IntegerField(blank=True, null=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="Scheduled"
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.token_number:
+            # Generate Token Number for the specific doctor on the specific date
+            last_appointment = Appointment.objects.filter(
+                doctor=self.doctor, appointment_date=self.appointment_date
+            ).order_by('token_number').last()
+            
+            if last_appointment and last_appointment.token_number:
+                self.token_number = last_appointment.token_number + 1
+            else:
+                self.token_number = 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.patient.patient_name} - {self.doctor}"

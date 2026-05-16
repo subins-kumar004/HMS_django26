@@ -111,6 +111,12 @@ class PharmacistAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['quantity'], 100)
 
+    def test_list_all_inventory(self):
+        # Task 135: List All Inventory API
+        response = self.client.get('/api/inventory/medicine')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+
     def test_update_inventory(self):
         update_data = {"quantity": 120}
         response = self.client.put(f'/api/inventory/medicine/stock/{self.stock.id}', update_data, format='json')
