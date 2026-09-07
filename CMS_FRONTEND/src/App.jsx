@@ -111,28 +111,28 @@ const App = () => {
             <Route path="/receptionist" element={<ReceptionistDashboard />} />
             <Route path="/receptionist/patients" element={<GenericCRUD title="Patients" endpoint="receptionist/patients" fields={patientFields} />} />
             <Route path="/receptionist/appointments" element={<GenericCRUD title="Appointments" endpoint="receptionist/appointments" fields={appointmentFields} />} />
-            <Route path="/receptionist/billing" element={<GenericCRUD title="Billing" endpoint="receptionist/bills" fields={[]} />} />
+            <Route path="/receptionist/billing" element={<GenericCRUD title="Billing" endpoint="receptionist/billing" fields={[]} />} />
           </Route>
 
           {/* Doctor Routes */}
           <Route element={<Layout allowedRoles={['doctor']} title="Doctor Dashboard" />}>
             <Route path="/doctor" element={<DoctorDashboard />} />
-            <Route path="/doctor/consultations" element={<GenericCRUD title="Consultations" endpoint="doctor/consultations" fields={consultationFields} />} />
-            <Route path="/doctor/prescriptions" element={<GenericCRUD title="Prescriptions" endpoint="doctor/prescriptions/medicine" fields={prescriptionFields} />} />
+            <Route path="/doctor/consultations" element={<GenericCRUD title="Consultations" endpoints={{ list: 'doctor/consultation/list/', create: 'doctor/consultation/create/', update: 'doctor/consultation/update/:id/' }} fields={consultationFields} />} />
+            <Route path="/doctor/prescriptions" element={<GenericCRUD title="Prescriptions" endpoints={{ list: 'doctor/medicine/list/', create: 'doctor/medicine/create/', update: 'doctor/medicine/update/:id/' }} fields={prescriptionFields} />} />
           </Route>
 
           {/* Pharmacist Routes */}
           <Route element={<Layout allowedRoles={['pharmacist']} title="Pharmacist Dashboard" />}>
             <Route path="/pharmacist" element={<PharmacistDashboard />} />
-            <Route path="/pharmacist/medicines" element={<GenericCRUD title="Medicines Catalog" endpoint="pharmacist/medicines" fields={medicineFields} />} />
-            <Route path="/pharmacist/inventory" element={<GenericCRUD title="Inventory" endpoint="pharmacist/inventory" fields={inventoryFields} />} />
+            <Route path="/pharmacist/medicines" element={<GenericCRUD title="Medicines Catalog" endpoints={{ list: 'pharmacist/medicines', create: 'pharmacist/medicines', update: 'pharmacist/medicines/:id' }} fields={medicineFields} />} />
+            <Route path="/pharmacist/inventory" element={<GenericCRUD title="Inventory" endpoints={{ list: 'pharmacist/inventory/medicine', create: 'pharmacist/inventory/medicine', update: 'pharmacist/inventory/medicine/stock/:id' }} fields={inventoryFields} />} />
           </Route>
 
           {/* Lab Tech Routes */}
           <Route element={<Layout allowedRoles={['lab']} title="Lab Technician Dashboard" />}>
             <Route path="/labtech" element={<LabtechDashboard />} />
-            <Route path="/labtech/tests" element={<GenericCRUD title="Lab Tests" endpoint="labtests" fields={labTestFields} />} />
-            <Route path="/labtech/results" element={<GenericCRUD title="Test Results" endpoint="labtests/results" fields={labResultFields} />} />
+            <Route path="/labtech/tests" element={<GenericCRUD title="Lab Tests" endpoints={{ list: 'labtests', create: 'labtests', update: 'labtests/:id' }} fields={labTestFields} />} />
+            <Route path="/labtech/results" element={<GenericCRUD title="Test Results" endpoints={{ list: 'labtests/results', create: 'labtests/prescription/add', update: 'labtests/results/:id' }} fields={labResultFields} />} />
           </Route>
 
           <Route path="/unauthorized" element={<div style={{ padding: '50px', textAlign: 'center', color: 'white' }}><h1>403 - Unauthorized</h1><p>You do not have permission to view this page.</p></div>} />

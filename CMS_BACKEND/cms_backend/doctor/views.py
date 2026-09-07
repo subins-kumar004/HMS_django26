@@ -23,6 +23,11 @@ class ConsultationCreateView(generics.CreateAPIView):
     queryset = Consultation.objects.all()
     serializer_class = ConsultationSerializer
 
+# Update consultation
+class ConsultationUpdateView(generics.UpdateAPIView):
+    queryset = Consultation.objects.all()
+    serializer_class = ConsultationSerializer
+
 
 # View all consultation history
 class ConsultationListView(generics.ListAPIView):

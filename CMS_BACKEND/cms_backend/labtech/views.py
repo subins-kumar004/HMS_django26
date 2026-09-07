@@ -184,8 +184,8 @@ def record_lab_result(request, labTestPrescriptionId):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    prescription.lab_test_value = request.data.get(
-        'lab_test_value'
+    prescription.test_value = request.data.get(
+        'test_value'
     )
 
     prescription.remarks = request.data.get(

@@ -13,6 +13,11 @@ urlpatterns = [
     ),
 
     path(
+        'consultation/update/<int:pk>/',
+        ConsultationUpdateView.as_view()
+    ),
+
+    path(
         'consultation/list/',
         ConsultationListView.as_view()
     ),

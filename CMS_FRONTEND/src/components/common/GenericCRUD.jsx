@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { Plus, Edit2, X, Trash2 } from 'lucide-react';
 
-const GenericCRUD = ({ title, endpoint, fields }) => {
+const GenericCRUD = ({ title, endpoint, endpoints, fields }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,8 +16,12 @@ const GenericCRUD = ({ title, endpoint, fields }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Ensure endpoint ends with trailing slash if not query params
-      const fetchUrl = endpoint.includes('?') ? endpoint : `${endpoint.replace(/\/$/, '')}/`;
+      let fetchUrl = '';
+      if (endpoints && endpoints.list) {
+        fetchUrl = endpoints.list;
+      } else {
+        fetchUrl = endpoint.includes('?') ? endpoint : `${endpoint.replace(/\/$/, '')}/`;
+      }
       const res = await api.get(fetchUrl);
       setData(Array.isArray(res.data) ? res.data : [res.data]);
     } catch (err) {
@@ -61,13 +65,23 @@ const GenericCRUD = ({ title, endpoint, fields }) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const baseUrl = endpoint.replace(/\/$/, '');
+      let requestUrl = '';
       if (editingId) {
         // Update
-        await api.put(`${baseUrl}/${editingId}/`, formData);
+        if (endpoints && endpoints.update) {
+          requestUrl = endpoints.update.replace(':id', editingId);
+        } else {
+          requestUrl = `${endpoint.replace(/\/$/, '')}/${editingId}/`;
+        }
+        await api.put(requestUrl, formData);
       } else {
         // Create
-        await api.post(`${baseUrl}/`, formData);
+        if (endpoints && endpoints.create) {
+          requestUrl = endpoints.create;
+        } else {
+          requestUrl = `${endpoint.replace(/\/$/, '')}/`;
+        }
+        await api.post(requestUrl, formData);
       }
       closeModal();
       fetchData(); // Refresh list
